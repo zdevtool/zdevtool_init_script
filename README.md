@@ -2,11 +2,19 @@
 
 A one-command script to set up your development environment on a new Linux machine or MacBook Pro.
 
-## Quick Start
+## Quick Start (Recommended)
 
-Run the following command in your terminal:
+Run this directly from GitHub without cloning:
 
 ```bash
+curl -sSL https://raw.githubusercontent.com/zdevtool/zdevtool_init_script/main/setup_dev_env.sh | bash
+```
+
+Or download first, then execute:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/zdevtool/zdevtool_init_script/main/setup_dev_env.sh -o setup_dev_env.sh
+chmod +x setup_dev_env.sh
 ./setup_dev_env.sh
 ```
 
@@ -22,6 +30,7 @@ The script will:
 
 - **curl** - Command-line URL transfer tool
 - **git** - Version control system
+- **zsh** - Z shell
 - **oh-my-zsh** - Zsh framework with plugins (zsh-syntax-highlighting, zsh-autosuggestions)
 - **tmux** - Terminal multiplexer
 - **python3** - Latest Python 3 and pip
@@ -29,12 +38,12 @@ The script will:
 - **htop** - Interactive process viewer
 - **vim** - Text editor
 
-## Usage
+## Usage (Alternative: Clone the Repo)
 
 1. Clone or copy this repository to your new machine:
 
    ```bash
-   git clone https://github.com/yourusername/zdevtool_init_script.git
+   git clone https://github.com/zdevtool/zdevtool_init_script.git
    cd zdevtool_init_script
    ```
 

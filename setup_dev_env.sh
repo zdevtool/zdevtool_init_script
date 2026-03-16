@@ -149,6 +149,31 @@ install_git() {
     fi
 }
 
+install_zsh() {
+    echo "Checking zsh..."
+    if command -v zsh &> /dev/null; then
+        echo "zsh is already installed: $(zsh --version)"
+        return 0
+    fi
+
+    if ask_user "Do you want to install zsh?" Y; then
+        require_sudo
+        if [[ "$OS" == "macos" ]]; then
+            brew install zsh
+        elif command -v apt-get &> /dev/null; then
+            sudo apt-get install -y zsh
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y zsh
+        elif command -v yum &> /dev/null; then
+            sudo yum install -y zsh
+        elif command -v pacman &> /dev/null; then
+            sudo pacman -S --noconfirm zsh
+        elif command -v zypper &> /dev/null; then
+            sudo zypper install -y zsh
+        fi
+    fi
+}
+
 install_oh_my_zsh() {
     echo "Checking oh-my-zsh..."
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
@@ -157,6 +182,13 @@ install_oh_my_zsh() {
     fi
 
     if ask_user "Do you want to install oh-my-zsh?" Y; then
+        install_zsh
+
+        if [[ -d "$HOME/.oh-my-zsh" ]]; then
+            echo "oh-my-zsh was already installed"
+            return 0
+        fi
+
         if ask_user "Install oh-my-zsh without plugins? (Press n to install with common plugins)" Y; then
             sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
         else
@@ -304,18 +336,66 @@ install_vim() {
     fi
 }
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+print_header() {
+    echo -e "${CYAN}${BOLD}"
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║       Development Environment Setup Script                   ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+}
+
+print_step() {
+    local step=$1
+    local title=$2
+    echo -e "${YELLOW}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}${BOLD}  ⇨ $step: $title${NC}"
+    echo -e "${YELLOW}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}  ✓ $1${NC}"
+}
+
+print_info() {
+    echo -e "${BLUE}  ℹ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}  ⚠ $1${NC}"
+}
+
+refresh_path() {
+    if [[ "$OS" == "macos" ]]; then
+        export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+    else
+        export PATH="/usr/local/bin:/usr/bin:$PATH"
+    fi
+
+    if command -v brew &> /dev/null; then
+        BREW_PREFIX=$(brew --prefix 2>/dev/null)
+        if [[ -n "$BREW_PREFIX" ]]; then
+            export PATH="$BREW_PREFIX/bin:$BREW_PREFIX/sbin:$PATH"
+        fi
+    fi
+}
+
 main() {
-    echo "============================================"
-    echo "  Development Environment Setup Script"
-    echo "============================================"
-    echo ""
+    print_header
 
     detect_os
     check_sudo
+    refresh_path
 
-    echo ""
-    echo "This script will help you set up your development environment."
-    echo "You'll be asked for each step whether you want to install or skip."
+    echo -e "${BLUE}This script will help you set up your development environment.${NC}"
+    echo -e "${BLUE}You'll be asked for each step whether you want to install or skip.${NC}"
     echo ""
 
     if [[ "$OS" == "macos" ]]; then
@@ -324,70 +404,52 @@ main() {
         update_system_linux
     fi
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 1: Install curl"
-    echo "--------------------------------------------"
+    print_step "Step 1" "curl"
     install_curl
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 2: Install git"
-    echo "--------------------------------------------"
+    print_step "Step 2" "git"
     install_git
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 3: Install oh-my-zsh"
-    echo "--------------------------------------------"
+    print_step "Step 3" "zsh"
+    install_zsh
+
+    print_step "Step 4" "oh-my-zsh"
     install_oh_my_zsh
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 4: Install tmux"
-    echo "--------------------------------------------"
+    print_step "Step 5" "tmux"
     install_tmux
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 5: Install python3"
-    echo "--------------------------------------------"
+    print_step "Step 6" "python3"
     install_python3
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 6: Install node.js (latest LTS)"
-    echo "--------------------------------------------"
+    print_step "Step 7" "node.js (latest LTS)"
     install_nodejs
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 7: Install htop"
-    echo "--------------------------------------------"
+    print_step "Step 8" "htop"
     install_htop
 
-    echo ""
-    echo "--------------------------------------------"
-    echo "Step 8: Install vim"
-    echo "--------------------------------------------"
+    print_step "Step 9" "vim"
     install_vim
 
+    echo -e "${GREEN}${BOLD}"
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║                    Setup Complete!                           ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    echo -e "${CYAN}${BOLD}Installed components:${NC}"
+    command -v curl &> /dev/null && print_success "curl"
+    command -v git &> /dev/null && print_success "git ($(git --version | cut -d' ' -f3))"
+    command -v zsh &> /dev/null && print_success "zsh ($(zsh --version))"
+    [[ -d "$HOME/.oh-my-zsh" ]] && print_success "oh-my-zsh"
+    command -v tmux &> /dev/null && print_success "tmux ($(tmux -V))"
+    command -v python3 &> /dev/null && print_success "python3 ($(python3 --version))"
+    command -v node &> /dev/null && print_success "node.js ($(node --version))"
+    command -v htop &> /dev/null && print_success "htop"
+    command -v vim &> /dev/null && print_success "vim"
+
     echo ""
-    echo "============================================"
-    echo "  Setup Complete!"
-    echo "============================================"
-    echo ""
-    echo "Installed components:"
-    command -v curl &> /dev/null && echo "  [✓] curl"
-    command -v git &> /dev/null && echo "  [✓] git"
-    [[ -d "$HOME/.oh-my-zsh" ]] && echo "  [✓] oh-my-zsh"
-    command -v tmux &> /dev/null && echo "  [✓] tmux"
-    command -v python3 &> /dev/null && echo "  [✓] python3"
-    command -v node &> /dev/null && echo "  [✓] node.js"
-    command -v htop &> /dev/null && echo "  [✓] htop"
-    command -v vim &> /dev/null && echo "  [✓] vim"
-    echo ""
-    echo "You may need to restart your shell for changes to take effect."
+    print_info "Run 'exec zsh' to switch to zsh shell immediately"
 }
 
 main "$@"
